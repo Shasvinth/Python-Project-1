@@ -1,19 +1,28 @@
 from datetime import datetime
+from decimal import Decimal, InvalidOperation, ROUND_HALF_EVEN
+import uuid
 
 class Transaction:
-    VALID_TYPES = {"deposit", "withdraw"}  # Define valid transaction types
+    VALID_TYPES = {"deposit", "withdraw"}
     
     def __init__(self, amount, transaction_type):
-        if not isinstance(amount, (int, float)):
-            raise ValueError("Amount must be a number")
-        if amount <= 0:
-            raise ValueError("Amount must be positive")
-        if transaction_type.lower() not in self.VALID_TYPES:
+        # Convert and validate amount with proper rounding
+        try:
+            if isinstance(amount, str):
+                amount = amount.strip()
+            self.amount = Decimal(str(amount)).quantize(Decimal('0.01'), rounding=ROUND_HALF_EVEN)
+            if self.amount <= 0:
+                raise ValueError("Amount must be positive")
+        except (InvalidOperation, TypeError):
+            raise ValueError("Amount must be a valid number")
+            
+        transaction_type = transaction_type.lower().strip()
+        if transaction_type not in self.VALID_TYPES:
             raise ValueError(f"Transaction type must be one of: {', '.join(self.VALID_TYPES)}")
             
-        self.amount = float(amount)  # Convert to float for consistency
-        self.transaction_type = transaction_type.lower()  # Normalize to lowercase
+        self.transaction_type = transaction_type
         self.timestamp = datetime.now()
+        self.transaction_id = str(uuid.uuid4())
 
     def __str__(self):
-        return f"{self.timestamp.strftime('%Y-%m-%d %H:%M:%S')} - {self.transaction_type.upper()}: Rs. {self.amount:.2f}"  # Format amount to 2 decimal places
+        return f"{self.timestamp.strftime('%Y-%m-%d %H:%M:%S')} [{self.transaction_id[:8]}] - {self.transaction_type.upper()}: Rs. {self.amount:.2f}"

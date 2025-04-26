@@ -7,11 +7,18 @@ users = []  # Global list to store users
 
 def create_user():
     try:
-        name = input("Enter name: ").strip()
-        email = input("Enter email: ").strip()
+        name = input("Enter name: ")
+        if not name:
+            raise ValueError("Name cannot be empty")
+        email = input("Enter email: ")
+        if not email:
+            raise ValueError("Email cannot be empty")
         
-        # Create user object which will validate inputs
         user = User(name, email)
+        # Check for duplicate email
+        if any(existing.email == user.email for existing in users):
+            raise ValueError("A user with this email already exists")
+            
         users.append(user)
         print(f"User {name} created successfully.\n")
         time.sleep(1)
@@ -27,7 +34,7 @@ def list_users():
         time.sleep(1)
         return False
     print("\nList of Users:")
-    print("-" * 70)  # Increased width for better formatting
+    print("-" * 70)
     for i, user in enumerate(users, 1):
         print(f"{i}. {user}")
     print("-" * 70 + "\n")
@@ -39,12 +46,14 @@ def create_account():
         return
 
     try:
-        # User selection
         user_input = input("Select user number (or 'q' to quit): ").strip().lower()
         if user_input == 'q':
             print("Account creation cancelled.")
             time.sleep(1)
             return
+            
+        if not user_input.isdigit():
+            raise ValueError("Please enter a valid number")
             
         idx = int(user_input) - 1
         if idx < 0 or idx >= len(users):
@@ -52,22 +61,27 @@ def create_account():
         
         selected_user = users[idx]
 
-        # Account type selection
-        print("\nAccount Type:")
+        print("\nAccount Types Available:")
         print("1. Savings Account (Min. Balance: Rs. 100)")
         print("2. Student Account (Min. Balance: Rs. 100)")
         print("3. Current Account (Min. Balance: Rs. 1000)")
         
-        account_choice = int(input("\nEnter your choice (1-3): "))
-        if account_choice not in [1, 2, 3]:
-            raise ValueError("Invalid account type")
+        account_choice = input("\nEnter your choice (1-3): ").strip()
+        if not account_choice.isdigit() or int(account_choice) not in [1, 2, 3]:
+            raise ValueError("Please select a valid account type (1-3)")
+        account_choice = int(account_choice)
 
-        # Initial deposit
-        amount = Decimal(input("Enter initial deposit amount: Rs. ").strip())
-        if amount < 0:
-            raise ValueError("Initial deposit cannot be negative")
+        # Initial deposit with proper validation
+        amount_input = input("Enter initial deposit amount: Rs. ").strip()
+        try:
+            amount = Decimal(amount_input)
+            amount = amount.quantize(Decimal('0.01'))
+            if amount < 0:
+                raise ValueError("Initial deposit cannot be negative")
+        except InvalidOperation:
+            raise ValueError("Please enter a valid amount")
 
-        # Create appropriate account type
+        # Create appropriate account type with minimum balance validation
         if account_choice == 1:
             if amount < SavingsAccount.MIN_BALANCE:
                 raise ValueError(f"Initial deposit must be at least Rs. {SavingsAccount.MIN_BALANCE} for Savings Account")
@@ -86,7 +100,7 @@ def create_account():
         print(f"Initial balance: Rs. {account.get_balance():.2f}\n")
         time.sleep(1)
 
-    except (ValueError, InvalidOperation) as e:
+    except ValueError as e:
         print(f"\nError creating account: {str(e)}")
         time.sleep(1)
     except Exception as e:
@@ -100,12 +114,17 @@ def deposit_money():
         return
 
     try:
-        list_users()
+        if not list_users():
+            return
+
         user_input = input("Select user number (or 'q' to quit): ").strip().lower()
         if user_input == 'q':
             print("Transaction cancelled.")
             time.sleep(1)
             return
+            
+        if not user_input.isdigit():
+            raise ValueError("Please enter a valid number")
             
         idx = int(user_input) - 1
         if idx < 0 or idx >= len(users):
@@ -119,17 +138,25 @@ def deposit_money():
         for i, acc in enumerate(user.accounts, 1):
             print(f"{i}. {acc.get_account_type()} - Balance: Rs. {acc.get_balance():.2f}")
         
-        acc_idx = int(input("\nSelect account number: ")) - 1
+        acc_idx_input = input("\nSelect account number: ").strip()
+        if not acc_idx_input.isdigit():
+            raise ValueError("Please enter a valid account number")
+            
+        acc_idx = int(acc_idx_input) - 1
         if acc_idx < 0 or acc_idx >= len(user.accounts):
             raise ValueError("Invalid account selection")
 
-        amount = Decimal(input("Enter amount to deposit: Rs. ").strip())
-        if amount <= 0:
-            raise ValueError("Amount must be positive")
+        amount_input = input("Enter amount to deposit: Rs. ").strip()
+        try:
+            amount = Decimal(amount_input)
+            if amount <= 0:
+                raise ValueError("Amount must be positive")
+        except InvalidOperation:
+            raise ValueError("Please enter a valid amount")
 
         user.accounts[acc_idx].deposit(float(amount))
 
-    except (ValueError, InvalidOperation) as e:
+    except ValueError as e:
         print(f"\nError during deposit: {str(e)}")
         time.sleep(1)
     except Exception as e:
@@ -143,12 +170,17 @@ def withdraw_money():
         return
 
     try:
-        list_users()
+        if not list_users():
+            return
+
         user_input = input("Select user number (or 'q' to quit): ").strip().lower()
         if user_input == 'q':
             print("Transaction cancelled.")
             time.sleep(1)
             return
+            
+        if not user_input.isdigit():
+            raise ValueError("Please enter a valid number")
             
         idx = int(user_input) - 1
         if idx < 0 or idx >= len(users):
@@ -162,17 +194,25 @@ def withdraw_money():
         for i, acc in enumerate(user.accounts, 1):
             print(f"{i}. {acc.get_account_type()} - Balance: Rs. {acc.get_balance():.2f}")
         
-        acc_idx = int(input("\nSelect account number: ")) - 1
+        acc_idx_input = input("\nSelect account number: ").strip()
+        if not acc_idx_input.isdigit():
+            raise ValueError("Please enter a valid account number")
+            
+        acc_idx = int(acc_idx_input) - 1
         if acc_idx < 0 or acc_idx >= len(user.accounts):
             raise ValueError("Invalid account selection")
 
-        amount = Decimal(input("Enter amount to withdraw: Rs. ").strip())
-        if amount <= 0:
-            raise ValueError("Amount must be positive")
+        amount_input = input("Enter amount to withdraw: Rs. ").strip()
+        try:
+            amount = Decimal(amount_input)
+            if amount <= 0:
+                raise ValueError("Amount must be positive")
+        except InvalidOperation:
+            raise ValueError("Please enter a valid amount")
 
         user.accounts[acc_idx].withdraw(float(amount))
 
-    except (ValueError, InvalidOperation) as e:
+    except ValueError as e:
         print(f"\nError during withdrawal: {str(e)}")
         time.sleep(1)
     except Exception as e:
@@ -189,6 +229,9 @@ def view_transactions():
             print("Operation cancelled.")
             time.sleep(1)
             return
+            
+        if not user_input.isdigit():
+            raise ValueError("Please enter a valid number")
             
         idx = int(user_input) - 1
         if idx < 0 or idx >= len(users):
