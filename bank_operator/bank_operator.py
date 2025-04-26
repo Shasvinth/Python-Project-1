@@ -5,15 +5,21 @@ import time  # Add time module import
 users = []  # Global list to store users
 
 def create_user():
-    name = input("Enter name: ")
-    email = input("Enter email: ")
+    name = input("Enter name: ").strip()  # Add strip() for name
+    if not name:  # Add name validation
+        print("Name cannot be empty!")
+        time.sleep(2)
+        return None
+        
+    email = input("Enter email: ").strip()  # Add strip() for email
     user = User(name, email)
     if not user.is_valid_email(email):
         print("Invalid email format! Please enter a valid email address.")
+        time.sleep(2)
         return None
     users.append(user)
     print(f"User {name} created successfully.\n")
-    time.sleep(2)  # Add 2 second delay
+    time.sleep(2)
     return user
 
 def list_users():
@@ -86,10 +92,22 @@ def create_account():
             continue
 
     if account_choice == 1:
+        if amount < SavingsAccount.MIN_BALANCE:
+            print(f"Initial deposit must be at least Rs. {SavingsAccount.MIN_BALANCE} for Savings Account")
+            time.sleep(2)
+            return
         account = SavingsAccount(selected_user.name, selected_user.email, amount)
     elif account_choice == 2:
+        if amount < StudentAccount.MIN_BALANCE:
+            print(f"Initial deposit must be at least Rs. {StudentAccount.MIN_BALANCE} for Student Account")
+            time.sleep(2)
+            return
         account = StudentAccount(selected_user.name, selected_user.email, amount)
-    else:
+    else:  # Current Account
+        if amount < CurrentAccount.MIN_BALANCE:
+            print(f"Initial deposit must be at least Rs. {CurrentAccount.MIN_BALANCE} for Current Account")
+            time.sleep(2)
+            return
         account = CurrentAccount(selected_user.name, selected_user.email, amount)
 
     selected_user.add_account(account)
@@ -193,7 +211,13 @@ def withdraw_money():
     
     while True:
         try:
-            acc_idx = int(input("Select account: ")) - 1
+            acc_input = input("Select account (or 'q' to quit): ").strip().lower()
+            if acc_input == 'q':
+                print("Transaction cancelled.\n")
+                time.sleep(2)
+                return
+                
+            acc_idx = int(acc_input) - 1
             if acc_idx < 0 or acc_idx >= len(user.accounts):
                 print("Invalid account selection.\n")
                 time.sleep(2)  # Add delay for error message

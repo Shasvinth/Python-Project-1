@@ -4,10 +4,14 @@ import time
 
 class BankAccount:
     def __init__(self, name="John", email="john@gmail.com", initial_balance=0):
-        if not isinstance(initial_balance, (int, float)) or initial_balance < 0:
-            print("Invalid initial balance!")
+        if not isinstance(initial_balance, (int, float)):
+            print("Invalid initial balance type! Must be a number.")
             time.sleep(2)
-            raise ValueError("Invalid initial balance!")
+            raise ValueError("Invalid initial balance type!")
+        if initial_balance < 0:
+            print("Initial balance cannot be negative!")
+            time.sleep(2)
+            raise ValueError("Initial balance cannot be negative!")
         self.balance = initial_balance
         self.transactions_history = []
         self.account_type = "Generic"
@@ -72,6 +76,20 @@ class SavingsAccount(BankAccount):
 
 
 class CurrentAccount(BankAccount):
+    MIN_BALANCE = 1000  # Adding minimum balance requirement
+
+    def withdraw(self, amount):
+        if not isinstance(amount, (int, float)) or amount <= 0:
+            print("Withdrawal amount must be a positive number!")
+            time.sleep(2)
+            raise ValueError("Withdrawal amount must be a positive number!")
+        if self.balance - amount < self.MIN_BALANCE:
+            error_msg = f"Must maintain minimum balance of Rs. {self.MIN_BALANCE} in Current account!"
+            print(error_msg)
+            time.sleep(2)
+            raise ValueError(error_msg)
+        return super().withdraw(amount)
+
     def get_account_type(self):
         return "Current account"
 
