@@ -1,291 +1,226 @@
 from account.user import User
 from account.bank_account import BankAccount, SavingsAccount, CurrentAccount, StudentAccount
-import time  # Add time module import
+import time
+from decimal import Decimal, InvalidOperation
 
 users = []  # Global list to store users
 
 def create_user():
-    name = input("Enter name: ").strip()  # Add strip() for name
-    if not name:  # Add name validation
-        print("Name cannot be empty!")
-        time.sleep(2)
-        return None
+    try:
+        name = input("Enter name: ").strip()
+        email = input("Enter email: ").strip()
         
-    email = input("Enter email: ").strip()  # Add strip() for email
-    user = User(name, email)
-    if not user.is_valid_email(email):
-        print("Invalid email format! Please enter a valid email address.")
-        time.sleep(2)
+        # Create user object which will validate inputs
+        user = User(name, email)
+        users.append(user)
+        print(f"User {name} created successfully.\n")
+        time.sleep(1)
+        return user
+    except ValueError as e:
+        print(f"Error creating user: {str(e)}")
+        time.sleep(1)
         return None
-    users.append(user)
-    print(f"User {name} created successfully.\n")
-    time.sleep(2)
-    return user
 
 def list_users():
     if not users:
         print("No users found! Please create a user first.\n")
-        time.sleep(2)  # Add delay for empty users message
+        time.sleep(1)
         return False
     print("\nList of Users:")
-    print("-" * 50)
-    for i, user in enumerate(users):
-        print(f"{i+1}. {user}")
-    print("-" * 50 + "\n")
-    time.sleep(2)  # Add delay after showing user list
+    print("-" * 70)  # Increased width for better formatting
+    for i, user in enumerate(users, 1):
+        print(f"{i}. {user}")
+    print("-" * 70 + "\n")
+    time.sleep(1)
     return True
 
 def create_account():
-    if not list_users():  # This will show users if they exist
+    if not list_users():
         return
 
-    while True:
-        try:
-            user_input = input("Select user number: ").strip()
-            if not user_input:
-                print("Please enter a number.")
-                time.sleep(2)  # Add delay for error message
-                continue
-
-            idx = int(user_input) - 1
-            if idx < 0 or idx >= len(users):
-                print("Invalid user selection.\n")
-                time.sleep(2)  # Add delay for error message
-                continue
+    try:
+        # User selection
+        user_input = input("Select user number (or 'q' to quit): ").strip().lower()
+        if user_input == 'q':
+            print("Account creation cancelled.")
+            time.sleep(1)
+            return
             
-            selected_user = users[idx]
-            break
-        except ValueError:
-            print("Invalid user selection.\n")
-            time.sleep(2)  # Add delay for error message
-            continue
+        idx = int(user_input) - 1
+        if idx < 0 or idx >= len(users):
+            raise ValueError("Invalid user selection")
+        
+        selected_user = users[idx]
 
-    print("Account Type:")
-    print("1. Savings Account")
-    print("2. Students Account")
-    print("3. Current Account")
-    
-    while True:
-        try:
-            account_choice = int(input("Enter your choice (1, 2, 3): "))
-            if account_choice not in [1, 2, 3]:
-                print("Invalid account type!")
-                time.sleep(2)  # Add delay for error message
-                continue
-            break
-        except ValueError:
-            print("Invalid account type!")
-            time.sleep(2)  # Add delay for error message
-            continue
+        # Account type selection
+        print("\nAccount Type:")
+        print("1. Savings Account (Min. Balance: Rs. 100)")
+        print("2. Student Account (Min. Balance: Rs. 100)")
+        print("3. Current Account (Min. Balance: Rs. 1000)")
+        
+        account_choice = int(input("\nEnter your choice (1-3): "))
+        if account_choice not in [1, 2, 3]:
+            raise ValueError("Invalid account type")
 
-    while True:
-        try:
-            amount = float(input("Enter initial deposit: "))
-            if amount < 0:
-                print("Amount cannot be negative.")
-                time.sleep(2)  # Add delay for error message
-                continue
-            break
-        except ValueError:
-            print("Please enter a valid amount.")
-            time.sleep(2)  # Add delay for error message
-            continue
+        # Initial deposit
+        amount = Decimal(input("Enter initial deposit amount: Rs. ").strip())
+        if amount < 0:
+            raise ValueError("Initial deposit cannot be negative")
 
-    if account_choice == 1:
-        if amount < SavingsAccount.MIN_BALANCE:
-            print(f"Initial deposit must be at least Rs. {SavingsAccount.MIN_BALANCE} for Savings Account")
-            time.sleep(2)
-            return
-        account = SavingsAccount(selected_user.name, selected_user.email, amount)
-    elif account_choice == 2:
-        if amount < StudentAccount.MIN_BALANCE:
-            print(f"Initial deposit must be at least Rs. {StudentAccount.MIN_BALANCE} for Student Account")
-            time.sleep(2)
-            return
-        account = StudentAccount(selected_user.name, selected_user.email, amount)
-    else:  # Current Account
-        if amount < CurrentAccount.MIN_BALANCE:
-            print(f"Initial deposit must be at least Rs. {CurrentAccount.MIN_BALANCE} for Current Account")
-            time.sleep(2)
-            return
-        account = CurrentAccount(selected_user.name, selected_user.email, amount)
+        # Create appropriate account type
+        if account_choice == 1:
+            if amount < SavingsAccount.MIN_BALANCE:
+                raise ValueError(f"Initial deposit must be at least Rs. {SavingsAccount.MIN_BALANCE} for Savings Account")
+            account = SavingsAccount(selected_user.name, selected_user.email, float(amount))
+        elif account_choice == 2:
+            if amount < StudentAccount.MIN_BALANCE:
+                raise ValueError(f"Initial deposit must be at least Rs. {StudentAccount.MIN_BALANCE} for Student Account")
+            account = StudentAccount(selected_user.name, selected_user.email, float(amount))
+        else:
+            if amount < CurrentAccount.MIN_BALANCE:
+                raise ValueError(f"Initial deposit must be at least Rs. {CurrentAccount.MIN_BALANCE} for Current Account")
+            account = CurrentAccount(selected_user.name, selected_user.email, float(amount))
 
-    selected_user.add_account(account)
-    print(f"{account.get_account_type()} added successfully!\n")
-    time.sleep(2)  # Add 2 second delay
+        selected_user.add_account(account)
+        print(f"\n✓ {account.get_account_type()} created successfully!")
+        print(f"Initial balance: Rs. {account.get_balance():.2f}\n")
+        time.sleep(1)
+
+    except (ValueError, InvalidOperation) as e:
+        print(f"\nError creating account: {str(e)}")
+        time.sleep(1)
+    except Exception as e:
+        print(f"\nUnexpected error: {str(e)}")
+        time.sleep(1)
 
 def deposit_money():
     if not users:
         print("No users available. Please create a user first.\n")
-        time.sleep(2)  # Add delay for error message
+        time.sleep(1)
         return
 
-    list_users()
-    while True:
-        try:
-            idx = int(input("Select user: ")) - 1
-            if idx < 0 or idx >= len(users):
-                print("Invalid user selection.\n")
-                time.sleep(2)  # Add delay for error message
-                continue
-            break
-        except ValueError:
-            print("Invalid user selection.\n")
-            time.sleep(2)  # Add delay for error message
-            continue
+    try:
+        list_users()
+        user_input = input("Select user number (or 'q' to quit): ").strip().lower()
+        if user_input == 'q':
+            print("Transaction cancelled.")
+            time.sleep(1)
+            return
+            
+        idx = int(user_input) - 1
+        if idx < 0 or idx >= len(users):
+            raise ValueError("Invalid user selection")
 
-    user = users[idx]
-    if not user.accounts:
-        print("No accounts found for this user.\n")
-        time.sleep(2)  # Add delay for error message
-        return
+        user = users[idx]
+        if not user.accounts:
+            raise ValueError("No accounts found for this user")
 
-    print("\nAvailable accounts:")
-    for i, acc in enumerate(user.accounts):
-        print(f"{i+1}. {acc.get_account_type()} - Balance: Rs. {acc.get_balance()}")
-    
-    while True:
-        try:
-            acc_input = input("Select account (or 'q' to quit): ").strip().lower()
-            if acc_input == 'q':
-                print("Transaction cancelled.\n")
-                time.sleep(2)  # Add 2 second delay
-                return
-                
-            acc_idx = int(acc_input) - 1
-            if acc_idx < 0 or acc_idx >= len(user.accounts):
-                print(f"Please enter a number between 1 and {len(user.accounts)}.\n")
-                time.sleep(2)  # Add delay for error message
-                continue
-            break
-        except ValueError:
-            print("Please enter a valid account number.\n")
-            time.sleep(2)  # Add delay for error message
-            continue
+        print("\nAvailable accounts:")
+        for i, acc in enumerate(user.accounts, 1):
+            print(f"{i}. {acc.get_account_type()} - Balance: Rs. {acc.get_balance():.2f}")
+        
+        acc_idx = int(input("\nSelect account number: ")) - 1
+        if acc_idx < 0 or acc_idx >= len(user.accounts):
+            raise ValueError("Invalid account selection")
 
-    while True:
-        try:
-            amount = float(input("Enter amount to deposit: "))
-            if amount <= 0:
-                print("Amount must be positive.")
-                time.sleep(2)  # Add delay for error message
-                continue
-            break
-        except ValueError:
-            print("Please enter a valid amount.")
-            time.sleep(2)  # Add delay for error message
-            continue
+        amount = Decimal(input("Enter amount to deposit: Rs. ").strip())
+        if amount <= 0:
+            raise ValueError("Amount must be positive")
 
-    user.accounts[acc_idx].deposit(amount)
-    print(f"Successfully deposited Rs. {amount}. New balance: Rs. {user.accounts[acc_idx].get_balance()}\n")
-    time.sleep(2)  # Add 2 second delay
+        user.accounts[acc_idx].deposit(float(amount))
+
+    except (ValueError, InvalidOperation) as e:
+        print(f"\nError during deposit: {str(e)}")
+        time.sleep(1)
+    except Exception as e:
+        print(f"\nUnexpected error: {str(e)}")
+        time.sleep(1)
 
 def withdraw_money():
     if not users:
         print("No users available. Please create a user first.\n")
-        time.sleep(2)  # Add delay for error message
+        time.sleep(1)
         return
-
-    list_users()
-    while True:
-        try:
-            idx = int(input("Select user: ")) - 1
-            if idx < 0 or idx >= len(users):
-                print("Invalid user selection.\n")
-                time.sleep(2)  # Add delay for error message
-                continue
-            break
-        except ValueError:
-            print("Invalid user selection.\n")
-            time.sleep(2)  # Add delay for error message
-            continue
-
-    user = users[idx]
-    if not user.accounts:
-        print("No accounts found for this user.\n")
-        time.sleep(2)  # Add delay for error message
-        return
-
-    for i, acc in enumerate(user.accounts):
-        print(f"{i+1}. {acc.get_account_type()} - Balance: Rs. {acc.get_balance()}")
-    
-    while True:
-        try:
-            acc_input = input("Select account (or 'q' to quit): ").strip().lower()
-            if acc_input == 'q':
-                print("Transaction cancelled.\n")
-                time.sleep(2)
-                return
-                
-            acc_idx = int(acc_input) - 1
-            if acc_idx < 0 or acc_idx >= len(user.accounts):
-                print("Invalid account selection.\n")
-                time.sleep(2)  # Add delay for error message
-                continue
-            break
-        except ValueError:
-            print("Invalid account selection.\n")
-            time.sleep(2)  # Add delay for error message
-            continue
-
-    while True:
-        try:
-            amount = float(input("Enter amount to withdraw: "))
-            if amount <= 0:
-                print("Amount must be positive.")
-                time.sleep(2)  # Add delay for error message
-                continue
-            break
-        except ValueError:
-            print("Please enter a valid amount.")
-            time.sleep(2)  # Add delay for error message
-            continue
 
     try:
-        user.accounts[acc_idx].withdraw(amount)
-        print(f"Successfully withdrawn Rs. {amount}. New balance: Rs. {user.accounts[acc_idx].get_balance()}\n")
-        time.sleep(2)  # Add 2 second delay
-    except ValueError as e:
-        print(f"Error: {e}\n")
-        time.sleep(2)  # Add 2 second delay
+        list_users()
+        user_input = input("Select user number (or 'q' to quit): ").strip().lower()
+        if user_input == 'q':
+            print("Transaction cancelled.")
+            time.sleep(1)
+            return
+            
+        idx = int(user_input) - 1
+        if idx < 0 or idx >= len(users):
+            raise ValueError("Invalid user selection")
+
+        user = users[idx]
+        if not user.accounts:
+            raise ValueError("No accounts found for this user")
+
+        print("\nAvailable accounts:")
+        for i, acc in enumerate(user.accounts, 1):
+            print(f"{i}. {acc.get_account_type()} - Balance: Rs. {acc.get_balance():.2f}")
+        
+        acc_idx = int(input("\nSelect account number: ")) - 1
+        if acc_idx < 0 or acc_idx >= len(user.accounts):
+            raise ValueError("Invalid account selection")
+
+        amount = Decimal(input("Enter amount to withdraw: Rs. ").strip())
+        if amount <= 0:
+            raise ValueError("Amount must be positive")
+
+        user.accounts[acc_idx].withdraw(float(amount))
+
+    except (ValueError, InvalidOperation) as e:
+        print(f"\nError during withdrawal: {str(e)}")
+        time.sleep(1)
+    except Exception as e:
+        print(f"\nUnexpected error: {str(e)}")
+        time.sleep(1)
 
 def view_transactions():
-    if not list_users():  # This will show users if they exist
+    if not list_users():
         return
 
-    while True:
-        try:
-            idx = int(input("Select user: ")) - 1
-            if idx < 0 or idx >= len(users):
-                print("Invalid user selection.\n")
-                time.sleep(2)  # Add delay for error message
-                continue
-            break
-        except ValueError:
-            print("Invalid user selection.\n")
-            time.sleep(2)  # Add delay for error message
-            continue
+    try:
+        user_input = input("Select user number (or 'q' to quit): ").strip().lower()
+        if user_input == 'q':
+            print("Operation cancelled.")
+            time.sleep(1)
+            return
+            
+        idx = int(user_input) - 1
+        if idx < 0 or idx >= len(users):
+            raise ValueError("Invalid user selection")
 
-    user = users[idx]
-    if not user.accounts:
-        print("No accounts found for this user.\n")
-        time.sleep(2)  # Add delay for error message
-        return
+        user = users[idx]
+        if not user.accounts:
+            raise ValueError("No accounts found for this user")
 
-    print("\nAccounts and Transactions:")
-    print("=" * 60)
-    for i, acc in enumerate(user.accounts):
-        print(f"\n{acc.get_account_type()} (Account #{i+1})")
-        print(f"Current Balance: Rs. {acc.get_balance()}")
-        print("-" * 40)
-        transactions = acc.get_transaction_history()
-        if not transactions:
-            print("No transactions found.")
-        else:
-            print("Transaction History:")
-            for tx in transactions:
-                print(f"  {tx}")
-        print("-" * 40)
-    print("\n")
-    time.sleep(2)  # Add delay after showing transactions
+        print(f"\nAccounts and Transactions for {user.name}:")
+        print("=" * 70)
+        
+        for i, acc in enumerate(user.accounts, 1):
+            print(f"\n{acc.get_account_type()} (Account #{i})")
+            print(f"Current Balance: Rs. {acc.get_balance():.2f}")
+            print("-" * 60)
+            
+            transactions = acc.get_transaction_history()
+            if not transactions:
+                print("No transactions found.")
+            else:
+                print("Transaction History:")
+                for tx in transactions:
+                    print(f"  {tx}")
+            print("-" * 60)
+        print("\n")
+        time.sleep(1)
+
+    except ValueError as e:
+        print(f"\nError: {str(e)}")
+        time.sleep(1)
+    except Exception as e:
+        print(f"\nUnexpected error: {str(e)}")
+        time.sleep(1)
 
