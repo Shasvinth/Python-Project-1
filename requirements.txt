@@ -1,3 +1,2 @@
 pytest==8.3.5
 rich>=14.0.0
-decimal-utils>=0.2.0  # For better decimal number handling
