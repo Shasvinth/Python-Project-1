@@ -1,28 +1,43 @@
 from account.transaction import Transaction
 from account.user import User
+import time
 
 class BankAccount:
-    def __init__(self,name= "John" ,email= "john@gmail.com", initial_balance=0):
-        if not isinstance(initial_balance , (int, float)) or initial_balance<0:
+    def __init__(self, name="John", email="john@gmail.com", initial_balance=0):
+        if not isinstance(initial_balance, (int, float)) or initial_balance < 0:
             print("Invalid initial balance!")
+            time.sleep(2)
+            raise ValueError("Invalid initial balance!")
         self.balance = initial_balance
         self.transactions_history = []
         self.account_type = "Generic"
         self.user = User(name, email)
 
     def deposit(self, amount):
-        if not isinstance(amount , (int, float)) and  amount <= 0:
-            print("Deposit amount is invalid!")
+        if not isinstance(amount, (int, float)) or amount <= 0:
+            print("Deposit amount must be a positive number!")
+            time.sleep(2)
+            raise ValueError("Deposit amount must be a positive number!")
         self.balance += amount
         self.transactions_history.append(Transaction(amount, "deposit"))
+        print(f"Deposit successful! New balance: Rs. {self.balance}")
+        time.sleep(2)
+        return self.balance
 
     def withdraw(self, amount):
-        if not isinstance(amount ,(int, float))  and amount <= 0:
-            print("Withdrawal amount is invalid!")
-        if self.balance < amount-100:
+        if not isinstance(amount, (int, float)) or amount <= 0:
+            print("Withdrawal amount must be a positive number!")
+            time.sleep(2)
+            raise ValueError("Withdrawal amount must be a positive number!")
+        if self.balance < amount:
             print("Insufficient Balance!")
-        self.balance += amount
+            time.sleep(2)
+            raise ValueError("Insufficient Balance!")
+        self.balance -= amount
         self.transactions_history.append(Transaction(amount, "withdraw"))
+        print(f"Withdrawal successful! New balance: Rs. {self.balance}")
+        time.sleep(2)
+        return self.balance
 
     def get_balance(self):
         return self.balance
@@ -41,25 +56,40 @@ class SavingsAccount(BankAccount):
     MIN_BALANCE = 100
 
     def withdraw(self, amount):
+        if not isinstance(amount, (int, float)) or amount <= 0:
+            print("Withdrawal amount must be a positive number!")
+            time.sleep(2)
+            raise ValueError("Withdrawal amount must be a positive number!")
         if self.balance - amount < self.MIN_BALANCE:
-            print("")
-            return 
-        super().withdraw(amount)
+            error_msg = f"Must maintain minimum balance of Rs. {self.MIN_BALANCE} in Savings account!"
+            print(error_msg)
+            time.sleep(2)
+            raise ValueError(error_msg)
+        return super().withdraw(amount)
 
     def get_account_type(self):
         return "Savings account"
 
-class CurrentAccount(BankAccount):
 
+class CurrentAccount(BankAccount):
     def get_account_type(self):
         return "Current account"
 
+
 class StudentAccount(BankAccount):
+    MIN_BALANCE = 100
 
     def withdraw(self, amount):
-        if (self.balance - amount) < 100:
-            print("A minimum balance of Rs.100 needed to withdraw from a Students account!")
-        super().withdraw(amount)
+        if not isinstance(amount, (int, float)) or amount <= 0:
+            print("Withdrawal amount must be a positive number!")
+            time.sleep(2)
+            raise ValueError("Withdrawal amount must be a positive number!")
+        if self.balance - amount < self.MIN_BALANCE:
+            error_msg = f"Must maintain minimum balance of Rs. {self.MIN_BALANCE} in Students account!"
+            print(error_msg)
+            time.sleep(2)
+            raise ValueError(error_msg)
+        return super().withdraw(amount)
 
     def get_account_type(self):
         return "Students account"
