@@ -1,5 +1,5 @@
 from datetime import datetime
-from decimal import Decimal, InvalidOperation, ROUND_HALF_EVEN
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 import uuid
 
 class Transaction:
@@ -10,7 +10,7 @@ class Transaction:
         try:
             if isinstance(amount, str):
                 amount = amount.strip()
-            self.amount = Decimal(str(amount)).quantize(Decimal('0.01'), rounding=ROUND_HALF_EVEN)
+            self.amount = Decimal(str(amount)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
             if self.amount <= 0:
                 raise ValueError("Amount must be positive")
         except (InvalidOperation, TypeError):
