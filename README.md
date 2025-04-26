@@ -4,7 +4,7 @@ A Python application simulating essential banking operations through a command-l
 
 ---
 
-## Project Overviews
+## Project Overview
 
 PyBank CLI provides a text-based environment for interacting with a simulated banking system. It demonstrates core concepts like account management, transactions, and user handling in Python. This project is under active development, and contributions aimed at improving its stability and functionality are encouraged.
 
